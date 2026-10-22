@@ -6,6 +6,8 @@ cargo run 1
 cargo run 2
 
 test files from the challenge are in fire-storm and stage-2
+https://github.com/CoreTechSecurity/fire-storm
+https://fire-storm.s3.eu-north-1.amazonaws.com/stage-2.zip
 
 once the program has started to switch stages you'll need kill the program and run it with a different argument
 
