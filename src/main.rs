@@ -42,7 +42,6 @@ struct IpHeader//x0800
     sourceadd:u32,
     destadd:u32
 }
-const IPV4_HEADER:usize=40;
 #[repr(C, packed)]
 struct Packet//6
 {
@@ -158,7 +157,6 @@ fn handle_connection(mut stream: TcpStream,stage:&String)
                     //throw data in, skip
                     if segment_start!=0
                     {
-                        println!("{} replaced {}",segment_start,start);
                         start=segment_start;
                         segment_start=0;
                         overflow=true;
@@ -179,17 +177,14 @@ fn handle_connection(mut stream: TcpStream,stage:&String)
                         let mut part=double_seg[k];//72,48
                         if segment_start!=0
                         {
-                            println!("{} replaced {}",segment_start,part[0]);
                             part[0]=segment_start;
                             segment_start=0;
                             overflow=true;
                         }
                         if part[1]>2048
                         {
-                            println!("{} end, replaced",part[1]);
                             segment_start=part[1]-2048;
                             part[1]=2048;
-                            println!("{} seg",segment_start);
                             continue;
                         }
                         let item=&endbuffer[j-1][part[0]..part[1]];//cap end at end of buffer then overflow(segmentstart)
@@ -201,7 +196,6 @@ fn handle_connection(mut stream: TcpStream,stage:&String)
                         else {
                             stream44.write(item);
                         }
-                        println!("{},{},{},{} count",endbuffer[j-1].len(),part[0],part[1],j);
                     }
                     for i in 0..double_ctfs.len()
                     {
@@ -416,8 +410,6 @@ fn double_buffer(buffer: &Vec<u8>,next: &Vec<u8>,index: usize)->(Vec<[usize;2]>,
                 else {
                     length=u16::from_be_bytes([buffer[i+6],buffer[i+7]]).into();
                 }
-
-
                 if buffer.len()-i<length+CTFS_HEADER//data split between buffers
                 {
                     let bytes_left=buffer.len()-i;
@@ -481,7 +473,6 @@ fn double_buffer(buffer: &Vec<u8>,next: &Vec<u8>,index: usize)->(Vec<[usize;2]>,
     }
     if last_occurance!=start&&last_occurance!=i
     {
-        //println!("{} last {} i",last_occurance,i);
         segments.push([last_occurance,2048]);//if last_oc==start
     }           //if last==end ignore 
     if last_occurance==i
@@ -507,16 +498,12 @@ unsafe fn convert_eth_ip(buf_slice:&[u8])->Option<&mut Packet>//slices at start 
 
 fn compile_file(ctfs_segments: Vec<&Ctfs>)
 {
-
     //create file, throw data into it
-    
-    //let mut file = File::create("ctfs.pdf").unwrap();
     let mut file = OpenOptions::new()
         .create(true)      
         .append(true)     
         .open("ctfs.pdf").unwrap();
-    //let mut writer = BufWriter::new(file);
-    //bufwriter 
+
     for i in 0..ctfs_segments.len()
     {
         if ctfs_segments[i].keyword==0//checks end of data due to filling with default values
@@ -553,11 +540,9 @@ fn compile_file_stage2(ctfs_segments: HashMap<u8, Vec<&Ctfs>>)
 
 fn singular_buffer(buffer: &Vec<u8>,index: usize)->(Vec<[usize;2]>,Vec<Vec<u8>>,usize)  {
 
-    //if haystack.len() < needle.len() { return false; }
     let keyword="CTFS".as_bytes();
     let mut segments:Vec<[usize;2]>=Vec::new();//contains non ctfs data
     let mut ctfs_segments:Vec<Vec<u8>>=Vec::new();//would be ctfs type, would need to return incomplete sections
-    // Simple check using windows()
     
     let mut i=0;//start
     let mut last_occurance=i;//=start
@@ -587,7 +572,6 @@ fn singular_buffer(buffer: &Vec<u8>,index: usize)->(Vec<[usize;2]>,Vec<Vec<u8>>,
                 last_occurance=i;
                 i-=1;//if theres a double packet
 
-                //println!("packet found");
                 //skip by total length
             }}}
         }
@@ -617,16 +601,8 @@ fn extract_ether_packets(buffer: &Vec<u8>)->(Vec<Vec<u8>>,Vec<Vec<u8>>,Vec<Vec<u
     let mut p5746_packets: Vec<Vec<u8>>=Vec::new();
     let mut i=0;
     loop {
-        let bytes_left=end-i;
-        let packet: Option<Packet>=None;//16-17 length location
         let length:usize=u16::from_be_bytes([buffer[i+16],buffer[i+17]]).into();
         println!("length: {}",length);
-        if length>500||length==1
-        {
-            println!("{:?}",&buffer[i..buffer.len()]);//20 off
-            println!("i: {}",i);
-        }
-        //
         let packet_vec=buffer[i..i+length+ETHER_HEADER].to_vec();
         i+=length+ETHER_HEADER-1;
         unsafe 
@@ -674,15 +650,6 @@ fn packet_route_add(out_vec:&mut Vec<Vec<u8>>,buf_slice:&[u8],overflow:bool,mut 
     if buf_slice.len()==0
     {
         return index;
-    }
-    let keyword="CTFS".as_bytes();
-    if buf_slice.len()>4
-    {
-        if buf_slice[0]==keyword[0]&&buf_slice[1]==keyword[1]&&buf_slice[2]==keyword[2]&&buf_slice[3]==keyword[3]
-        {
-            panic!();
-        }
-
     }
     if out_vec.len()==0
     {
