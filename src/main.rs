@@ -192,6 +192,10 @@ fn handle_connection(mut stream: TcpStream,stage:&String)
                         if stage=="2"{
                             index=packet_route_add(&mut packet_routing, item, overflow, index);
                             overflow=false;
+                            if k==double_seg.len()-1 &&part[1]==2048
+                            {
+                                overflow=true;
+                            }
                         }
                         else {
                             stream44.write(item);
