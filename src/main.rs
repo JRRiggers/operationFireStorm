@@ -433,27 +433,27 @@ fn double_buffer(buffer: &Vec<u8>,next: &Vec<u8>,index: usize)->(Vec<[usize;2]>,
             {
                 break;
             }                                   //TFS FS S
-            let bytes_left:i16=(buffer.len()-i) as i16;//1  2  3
+            let bytes_left:i16=(buffer.len()-i-1) as i16;//1  2  3
             //println!("{},67",buffer[i]);
             if buffer[i] ==keyword[0]
             {
-                for j in 0..2
+                for j in 0..3
                 {
-                    if bytes_left-j<=0//into next buffer
+                    if i+j+1>=2048//into next buffer
                     {
-                        if next[((bytes_left-j)).unsigned_abs() as usize] ==keyword[(1+j) as usize]
+                        if next[((bytes_left-j as i16)).unsigned_abs() as usize] ==keyword[(1+j) as usize]
                         {
                             if j==2
                             {
                                 segments.push([last_occurance,i]);
                                 //found match
-                                let bytes_left:usize=bytes_left as usize;
+                                let bytes_left:usize=bytes_left as usize+1;
                                 let length:usize=u16::from_be_bytes([next[6-bytes_left],next[7-bytes_left]]).into();
-                                println!("missing");
                                 ctfs_segments.push([&buffer[i..i+bytes_left],&next[0..length+CTFS_HEADER-bytes_left]].concat().to_vec());
                                 i+=length+CTFS_HEADER;
-                                last_occurance=i-1;
-                                continue;
+                                last_occurance=i;
+                                segments.push([last_occurance,last_occurance]);
+                                return (segments,ctfs_segments,index);
                             }
                         }
                         else {
